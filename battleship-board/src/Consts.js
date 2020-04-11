@@ -4,7 +4,7 @@ module.exports = {
     PLACEHOLDER: "#9dbec7",
     HIT: "#f00a0a",
     MISS: "#1652de",
-    DEBUG: true,
+    DEBUG: false,
     SHIPS: [
         {
             NAME: "Carrier",
