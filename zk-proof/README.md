@@ -1,9 +1,9 @@
 ## Build
-The zk-proof folder is built with yarn using ```yarn install```. It requires both the package.json and yarn.lock files - note that the versions of ```snarkjs``` and ```circom``` may be different from the latest versions.
+The zk-proof folder is built with yarn using ```yarn install```. It requires both the ```package.json``` and ```yarn.lock``` files - note that the versions of ```snarkjs``` and ```circom``` may be different from the latest versions.
 
 ## Flow
 ### 1. Creating & compiling the circuit. 
-The circuit code lies in ```zk-proof/circuits/main.circom``` and is compiled using ```zk-proof/circuits/compile.js``` into a json file ```zk-proof/circuits/compile.js```
+The circuit code lies in ```zk-proof/circuits/main.circom``` and is compiled using ```zk-proof/circuits/compile.js``` into a json file ```zk-proof/circuits/compile.js```. We only need to compile the circuit once before build.
 
 ### 2. Trusted Setup.
 The file ```zk-proof/src/keygen.js``` generates a proving key and verifying key in the ```zk-proof/setup``` folder. This is the public information required to create & verify the proof - think of it like the parameters of the proof. It's "trusted" because the generator has to be trusted not to store the toxic waste. 
