@@ -3,9 +3,17 @@ import ReactDOM from 'react-dom';
 import './index.css';
 import App from './App';
 
+import { Drizzle, generateStore } from "drizzle";
+import HelloWorld from "./contracts/HelloWorld.json";
+
+const options = { contracts: [HelloWorld] };
+
+const drizzleStore = generateStore(options);
+const drizzle = new Drizzle(options, drizzleStore);
+
 ReactDOM.render(
   <React.StrictMode>
-    <App />
+    <App drizzle = {drizzle} />
   </React.StrictMode>,
   document.getElementById('root')
 );
