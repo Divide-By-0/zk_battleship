@@ -2,8 +2,8 @@ pragma solidity ^0.5.0;
 
 contract Battleship {
 
-    uint constant n_shipsquares = 17;
-    uint constant INVALID_SHOT = 999;
+    uint64 constant n_shipsquares = 17;
+    uint64 constant INVALID_SHOT = 999;
 
     uint n_games = 0;
     uint n_activegames = 0;
@@ -13,10 +13,10 @@ contract Battleship {
         address p2;
         uint64 board1;
         uint64 board2;
-        uint[100] revealed1; // 0=unrevealed; 1=miss; 2=hit
-        uint[100] revealed2;
-        uint candidateShot; // INVALID_SHOT when no candidate, [0, 99] for shot
-        uint turn; // 1 for p1, 2 for p2
+        uint64[100] revealed1; // 0=unrevealed; 1=miss; 2=hit
+        uint64[100] revealed2;
+        uint64 candidateShot; // INVALID_SHOT when no candidate, [0, 99] for shot
+        uint64 turn; // 1 for p1, 2 for p2
         bool active;
         bool exists; // bool defaults to false
     }
@@ -27,23 +27,24 @@ contract Battleship {
 
     mapping(uint => Game) private games;
 
-    function declare() external returns(uint){
+    function declare() external returns(uint) {
         // Create new game for a user and give them gameID 
         // TODO: randomize gameID as 5 digit number or something
-        Game memory newgame;
-        newgame.p1 = msg.sender;
-        newgame.board1 = 0;
-        for(uint i = 0; i < 100; i++) {
-            newgame.revealed1[i] = 0;
-        }
-        newgame.turn = 1;
-        newgame.active = false;
-        newgame.exists = true;
-        newgame.candidateShot = INVALID_SHOT;
 
         // TODO: gameID randomize
         uint gameID = 123456;
-        games[gameID] = newgame;
+        Game storage game = games[gameID];
+
+        game.p1 = msg.sender;
+        game.board1 = 0;
+        for (uint64 i = 0; i < 100; i++) {
+            game.revealed1[i] = 0;
+        }
+        game.turn = 1;
+        game.active = false;
+        game.exists = true;
+        game.candidateShot = INVALID_SHOT;
+
         emit GameIDs(msg.sender, gameID);
 
         n_games++;
@@ -52,59 +53,55 @@ contract Battleship {
 
     function join(uint gameID) external {
         // Allow player to join valid game if they present gameID and noone else is playing
-        Game memory game = games[gameID];
-        require(game.exists == true && game.active == false);
+        Game storage game = games[gameID];
+        require(game.exists && !game.active);
 
         game.p2 = msg.sender;
         game.board2 = 0;
-        for(uint i = 0; i < 100; i++) {
+        for (uint64 i = 0; i < 100; i++) {
             game.revealed2[i] = 0;
         }
         game.active = true;
-        games[gameID] = game;
 
         n_activegames++;
     } 
 
     function place(uint gameID, uint64 board) external {
-        Game memory game = games[gameID];
+        Game storage game = games[gameID];
         // check that game has 2 people, and that the sender is a player w/empty board
-        require(game.active == true);
+        require(game.active);
         require((game.p1 == msg.sender && game.board1 == 0) || (game.p2 == msg.sender && game.board2 == 0));
 
 
         // player 1 attempting to set on empty board
         if (game.p1 == msg.sender) {
             game.board1 = board;
-            games[gameID] = game;
         }
         // player 2 attempting to set on empty board
         else if (game.p2 == msg.sender) {
             game.board2 = board;
-            games[gameID] = game;
         }
     }
 
-    function fire(uint gameID, uint square) external {
-        Game memory game = games[gameID];
+    function fire(uint gameID, uint64 square) external {
+        Game storage game = games[gameID];
         // check ships placed, it's sender's turn, and the coordinate is valid
-        require(game.active == true && game.board1 != 0 && game.board2 != 0);
+        require(game.active && game.board1 != 0 && game.board2 != 0);
         require((game.p1 == msg.sender && game.turn == 1) || (game.p2 == msg.sender && game.turn == 2));
-        require(square >= 0 && square < 100);
+        require(game.candidateShot == INVALID_SHOT && square < 100);
 
         game.candidateShot = square;
-        games[gameID] = game;
     }
 
     // TODO: implement zksnark verification
-    function verify(uint64 proof, uint result) internal view returns(bool) {
+    function verify(uint64 proof, uint result) internal pure returns(bool) {
         return true;
     }
     // verify proof and end current turn
-    function shotresult(uint gameID, uint64 proof, uint result) external returns(bool) {
-        Game memory game = games[gameID];
+    function resolveShot(uint gameID, uint64 proof, uint64 result) external returns(bool) {
+        Game storage game = games[gameID];
         // check ships placed, it's opponent's turn, opponent already shot, result is valid
-        require(game.active == true && game.board1 != 0 && game.board2 != 0);
+        require(game.active && game.board1 != 0 && game.board2 != 0);
         require((game.p1 == msg.sender && game.turn == 2) || (game.p2 == msg.sender && game.turn == 1));
         require(game.candidateShot != INVALID_SHOT);
         require(result == 0 || result == 1);
@@ -119,7 +116,6 @@ contract Battleship {
             // end current turn
             game.turn = 3 - game.turn;
             game.candidateShot = INVALID_SHOT;
-            games[gameID] = game;
         }
         // returns true if successfully verifies proof and update was made
         return verified;
