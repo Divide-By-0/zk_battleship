@@ -1,6 +1,9 @@
 # battleship
 Zero Knowledge Battleship
 
+## Battleship.sol Contract
+Some progress made on the contract. More TODOs in the comments. See battleshiptest.js for which parts I've tested. 
+
 ## Details
 
 built using truffle. and drizzle in theory. I say in theory because npm is being stupid as fuck on my laptop and it's not letting me install the drizzle package. send help.
