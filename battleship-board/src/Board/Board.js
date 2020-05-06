@@ -1,6 +1,7 @@
 import React from 'react';
 import "./Board.css";
 import Square from "./Square.js"
+import { RegisterClient, ReceiveShot, RespondShot } from '../Comm.js';
 
 const Constants = require("../Consts.js");
 
@@ -28,7 +29,9 @@ class Board extends React.Component {
         this.lockPositions = this.lockPositions.bind(this)
         this.handleKey = this.handleKey.bind(this)
         this.finalizeShip = this.finalizeShip.bind(this)
-        this.markSquareAsHit = this.markSquareAsHit.bind(this)
+        this.markSquare = this.markSquare.bind(this)
+        this.receiveShot = this.receiveShot.bind(this)
+        this.registerSocketEvents = this.registerSocketEvents.bind(this)
     }
 
     componentDidMount() {
@@ -120,6 +123,11 @@ class Board extends React.Component {
         this.setState({grid: grid})
     }
 
+    registerSocketEvents() {
+        ReceiveShot(this.receiveShot)
+        this.props.markFinished()
+    }
+
     lockPositions() {     
         let canLock = true
         for (let ship of Constants.SHIPS) {            
@@ -131,9 +139,9 @@ class Board extends React.Component {
             }            
         }
         if (canLock || Constants.DEBUG) {            
-            this.setState({locked: true})
-            this.props.markFinished()
+            this.setState({locked: true})            
             // Fill in this function to serialize and send the positions to a server
+            RegisterClient(this.registerSocketEvents)
         }
     }
 
@@ -159,11 +167,22 @@ class Board extends React.Component {
         return board
     }    
 
-    markSquareAsHit(x, y) {
+    receiveShot(loc) {
+        console.log("Taking a shot at", loc)
+        if (this.state.grid[loc.x][loc.y] !== '-') {
+            RespondShot({hit: true, x:loc.x, y:loc.y})
+            this.markSquare(loc.x, loc.y, Constants.HIT)
+        } else {
+            RespondShot({hit: false, x:loc.x, y:loc.y})
+            this.markSquare(loc.x, loc.y, Constants.MISS)
+        }
+    }
+
+    markSquare(x, y, color) {
         // Use this function as the receptor of a command from the server that a ship got hit
         // I imagine that the server will control winning and losing
         let grid = this.state.grid
-        grid[x][y] = Constants.HIT
+        grid[x][y] = color
         this.setState({grid: grid})
     }
     
@@ -186,12 +205,6 @@ class Board extends React.Component {
                     </tbody>                    
                 </table>
                 {!this.state.locked && <button onClick={this.lockPositions}>Lock in Positions</button>}
-            {/*                 
-                Just a little toy button to test that hitting a square produces the correct result
-                <button onClick={() => this.markSquareAsHit(Math.floor(Math.random() * 10), Math.floor(Math.random() * 10))}>
-                    Hit
-                </button> 
-            */}
             </div>
         )
     }
