@@ -1,0 +1,16 @@
+.boardTable {
+    text-align: center;
+    margin: auto;
+    height: auto;
+    table-layout: fixed;
+    border: 1px solid black;
+}
+
+.boardCell {
+    color: red;
+    border: ".5px solid black"
+}
+
+.warning {
+    color: red;
+}
