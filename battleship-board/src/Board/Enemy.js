@@ -1,5 +1,6 @@
 import React from "react";
 import Square from "./Square.js"
+import { TakeShot, ReceiveResult } from "../Comm.js"
 
 const Constants = require("../Consts.js");
 
@@ -13,28 +14,35 @@ class EnemyBoard extends React.Component {
         }
         this.generateBoard = this.generateBoard.bind(this)
         this.handleClick = this.handleClick.bind(this)
-        this.takeShot = this.takeShot.bind(this)
+        this.takeShot = this.takeShot.bind(this)        
+        this.receiveResult = this.receiveResult.bind(this)
     }
 
-    async takeShot(x, y) {
+    componentDidMount() {
+        console.log("mounted")
+        ReceiveResult(this.receiveResult)
+    }
+
+    takeShot(x, y) {
         // Fill in this function with necessary logic to make a shot at enemy board
-        // For testing purposes, just return hit with p=0.5, and generate dummy info for ship
-        let success = Math.floor(Math.random() * 2)
-        let shipInfo = success ? Constants.SHIPS[Math.floor(Math.random() * 5)] : null
-        return {success: success, ship: shipInfo}
+        // For testing purposes, just return hit with p=0.5, and generate dummy info for ship                
+        console.log("Trying to take shot")
+        TakeShot({x: x, y:y})        
+    }
+
+    receiveResult(resp) {
+        let grid = this.state.grid
+        alert(resp.hit ? "Your shot was a hit on the enemy!": "Your shot was a miss!")
+        grid[resp.x][resp.y] = resp.hit ? Constants.HIT : Constants.MISS
+        this.setState({
+            grid: grid,
+            shooting: false
+        })
     }
     
     async handleClick(x, y) {        
         if (this.state.shooting) {
-            let result = await this.takeShot()
-            console.log(result)
-            let grid = this.state.grid
-            alert(result.success ? "Your shot was a hit on the enemy " + result.ship.NAME + "!" : "Your shot was a miss!")
-            grid[x][y] = result.success ? result.ship.COLOR : Constants.MISS
-            this.setState({
-                grid: grid,
-                shooting: false
-            })
+            this.takeShot(x, y)
         }
     }
 
